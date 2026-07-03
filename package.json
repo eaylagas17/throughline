@@ -1,0 +1,10 @@
+{
+  "name": "throughline",
+  "version": "0.1.0",
+  "description": "Keep the throughline across every session. An anti-amnesia backlog that surfaces at session start and hands phased work to fresh sessions without drift.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/**/*.test.mjs" },
+  "license": "MIT",
+  "author": "Enrique Aylagas"
+}
