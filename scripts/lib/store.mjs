@@ -29,13 +29,21 @@ export function parseItem(text, file = '') {
   const m = text.match(/^---\n([\s\S]*?)\n---/);
   if (!m) return item;
   const lines = m[1].split('\n');
-  let ctx = null; // 'anchors' | 'phases' | null
+  let ctx = null; // 'anchors' | 'phases' | null — which top-level section we're inside
+  let anchorsFilesBlock = false; // true while inside an `anchors.files:` block dash-list
   for (const line of lines) {
     if (!line.trim()) continue;
+    const trimmed = line.trim();
     const indent = line.length - line.trimStart().length;
+    const isDash = trimmed.startsWith('-');
 
-    if (indent === 0) {
+    // A dash line belongs to the CURRENT section's list regardless of its
+    // indent (YAML allows dashes at the same indent as their parent key).
+    // Only a non-dash key at indent 0 starts a new top-level section / ends
+    // the current one.
+    if (indent === 0 && !isDash) {
       ctx = null;
+      anchorsFilesBlock = false;
       const kv = line.match(/^([A-Za-z_]+):\s*(.*)$/);
       if (!kv) continue;
       const [, key, rawVal] = kv;
@@ -50,23 +58,32 @@ export function parseItem(text, file = '') {
       continue;
     }
 
-    if (ctx === 'anchors' && indent >= 2) {
-      const kv = line.trim().match(/^([A-Za-z_]+):\s*(.*)$/);
+    if (ctx === 'anchors') {
+      if (anchorsFilesBlock) {
+        const item2 = trimmed.match(/^-\s*(.*)$/);
+        if (item2) { item.anchors.files.push(stripQuotes(item2[1])); continue; }
+        // A non-dash line at this point means the files block ended;
+        // fall through to normal anchors key handling below.
+        anchorsFilesBlock = false;
+      }
+      const kv = trimmed.match(/^([A-Za-z_]+):\s*(.*)$/);
       if (!kv) continue;
       const [, key, rawVal] = kv;
-      if (key === 'sha') item.anchors.sha = stripQuotes(rawVal);
-      else if (key === 'plan') item.anchors.plan = stripQuotes(rawVal);
+      const val = rawVal.trim();
+      if (key === 'sha') item.anchors.sha = stripQuotes(val);
+      else if (key === 'plan') item.anchors.plan = stripQuotes(val);
       else if (key === 'files') {
-        const list = parseInlineList(rawVal);
+        if (val === '') { anchorsFilesBlock = true; continue; }
+        const list = parseInlineList(val);
         if (list) item.anchors.files = list;
       }
       continue;
     }
 
-    if (ctx === 'phases' && indent >= 2) {
-      const dash = line.trim().match(/^-\s*name:\s*(.*)$/);
+    if (ctx === 'phases') {
+      const dash = trimmed.match(/^-\s*name:\s*(.*)$/);
       if (dash) { item.phases.push({ name: stripQuotes(dash[1]), status: '' }); continue; }
-      const kv = line.trim().match(/^([A-Za-z_]+):\s*(.*)$/);
+      const kv = trimmed.match(/^([A-Za-z_]+):\s*(.*)$/);
       if (kv && item.phases.length) {
         if (kv[1] === 'status') item.phases[item.phases.length - 1].status = stripQuotes(kv[2]);
         // per-phase 'delta' etc. ignored by scripts

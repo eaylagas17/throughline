@@ -66,3 +66,85 @@ test('findStore finds .throughline at startDir', () => {
   assert.equal(findStore(dir), join(dir, '.throughline'));
   assert.equal(findStore(join(tmpdir(), 'tl-nonexistent-xyz')), null);
 });
+
+test('parseItem reads phases with dashes indented under the key (regression)', () => {
+  const src = `---
+id: 0010
+title: Indented dash phases
+status: parked
+phases:
+  - name: Phase 1
+    status: done
+  - name: Phase 2
+    status: pending
+---
+`;
+  const it = parseItem(src);
+  assert.deepEqual(it.phases, [
+    { name: 'Phase 1', status: 'done' },
+    { name: 'Phase 2', status: 'pending' },
+  ]);
+});
+
+test('parseItem reads anchors.files inline (regression)', () => {
+  const src = `---
+id: 0011
+title: Inline files
+status: parked
+anchors:
+  files: [src/a.ts, src/b.ts]
+---
+`;
+  const it = parseItem(src);
+  assert.deepEqual(it.anchors.files, ['src/a.ts', 'src/b.ts']);
+});
+
+test('parseItem reads phases with dashes at column 0 (same indent as key)', () => {
+  const src = `---
+id: 0012
+title: Column-0 dash phases
+status: parked
+phases:
+- name: Phase 1
+  status: done
+- name: Phase 2
+  status: pending
+---
+`;
+  const it = parseItem(src);
+  assert.deepEqual(it.phases, [
+    { name: 'Phase 1', status: 'done' },
+    { name: 'Phase 2', status: 'pending' },
+  ]);
+});
+
+test('parseItem reads anchors.files as a block dash list', () => {
+  const src = `---
+id: 0013
+title: Block files list
+status: parked
+anchors:
+  files:
+    - src/a.ts
+    - src/b.ts
+---
+`;
+  const it = parseItem(src);
+  assert.deepEqual(it.anchors.files, ['src/a.ts', 'src/b.ts']);
+});
+
+test('parseItem handles column-0 phases followed by another top-level key', () => {
+  const src = `---
+id: 0014
+title: Column-0 dash phases then more keys
+status: parked
+phases:
+- name: Phase 1
+  status: done
+intent: after phases block
+---
+`;
+  const it = parseItem(src);
+  assert.deepEqual(it.phases, [{ name: 'Phase 1', status: 'done' }]);
+  assert.equal(it.intent, 'after phases block');
+});
