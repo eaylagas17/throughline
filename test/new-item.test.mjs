@@ -4,6 +4,7 @@ import { mkdtempSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { nextId, scaffold, main } from '../scripts/new-item.mjs';
+import { parseItem } from '../scripts/lib/store.mjs';
 
 test('nextId increments the max, pads to 4', () => {
   assert.equal(nextId([]), '0001');
@@ -35,4 +36,19 @@ test('main stamps sha: none when not a git repo (headSha empty)', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'cap2-'));
   const path = main(['x'], { cwd, headSha: () => '', gitRoot: () => null });
   assert.match(readFileSync(path, 'utf8'), /sha: none/);
+});
+
+test('scaffold round-trips cleanly through parseItem', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cap3-'));
+  const path = main(['Add', 'search'], { cwd, headSha: () => 'abc1234', gitRoot: () => null });
+  const txt = readFileSync(path, 'utf8');
+  const item = parseItem(txt, path);
+  assert.equal(item.intent, '');
+  assert.equal(item.anchors.plan, '');
+  assert.deepEqual(item.anchors.files, []);
+  assert.equal(item.anchors.sha, 'abc1234');
+  assert.equal(item.status, 'parked');
+  assert.deepEqual(item.phases, []);
+  assert.equal(item.id, '0001');
+  assert.equal(item.title, 'Add search');
 });

@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { listItems } from './lib/store.mjs';
 import { headSha as realHeadSha, gitRoot as realGitRoot } from './lib/git.mjs';
 
@@ -13,15 +14,22 @@ export function scaffold({ id, title, sha }) {
 id: ${id}
 title: ${title}
 status: parked
-intent: ""            # what + why it matters (fill in)
-decisions: []         # settled choices/constraints the next session must respect
-open_questions: []    # unresolved — Ship will ask ONLY these
-acceptance: ""        # done when …
+# intent: what + why it matters (fill in)
+intent: ""
+# decisions: settled choices/constraints the next session must respect
+decisions: []
+# open_questions: unresolved — Ship will ask ONLY these
+open_questions: []
+# acceptance: done when …
+acceptance: ""
 anchors:
   sha: ${sha}
-  files: []           # relevant paths, so a cold session points at ground truth
-  plan: ""            # path to a plan file if this is phased
-phases: []            # add phases only if multi-step
+  # files: relevant paths, so a cold session points at ground truth
+  files: []
+  # plan: path to a plan file if this is phased
+  plan: ""
+# phases: add phases only if multi-step
+phases: []
 ---
 `;
 }
@@ -41,7 +49,7 @@ export function main(argv, deps = {}) {
   return file;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const path = main(process.argv.slice(2));
   process.stdout.write(path + '\n');
 }
