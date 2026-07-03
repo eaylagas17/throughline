@@ -49,7 +49,7 @@ export function main(argv, deps = {}) {
   return file;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const path = main(process.argv.slice(2));
   process.stdout.write(path + '\n');
 }

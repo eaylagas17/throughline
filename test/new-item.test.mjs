@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { nextId, scaffold, main } from '../scripts/new-item.mjs';
 import { parseItem } from '../scripts/lib/store.mjs';
 
@@ -51,4 +52,10 @@ test('scaffold round-trips cleanly through parseItem', () => {
   assert.deepEqual(item.phases, []);
   assert.equal(item.id, '0001');
   assert.equal(item.title, 'Add search');
+});
+
+test('importing new-item.mjs with no argv[1] does not crash', () => {
+  const out = execFileSync('node', ['-e', "import('./scripts/new-item.mjs').then(()=>console.log('ok'))"],
+    { cwd: process.cwd(), encoding: 'utf8' });
+  assert.match(out, /ok/);
 });
