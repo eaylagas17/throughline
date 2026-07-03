@@ -1,0 +1,26 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+
+const read = p => JSON.parse(readFileSync(p, 'utf8'));
+
+test('plugin.json points at real hooks', () => {
+  const p = read('.claude-plugin/plugin.json');
+  assert.equal(p.name, 'throughline');
+  assert.ok(existsSync(p.hooks.replace('./', '')));
+});
+
+test('marketplace.json is installable', () => {
+  const m = read('.claude-plugin/marketplace.json');
+  assert.equal(m.name, 'throughline');
+  assert.equal(m.plugins[0].source, './');
+});
+
+test('hooks matcher covers startup|resume|clear|compact', () => {
+  const h = read('hooks/throughline-hooks.json');
+  const start = h.hooks.SessionStart[0];
+  assert.equal(start.matcher, 'startup|resume|clear|compact');
+  const cmd = start.hooks[0].command;
+  assert.match(cmd, /throughline-surface\.mjs/);
+  assert.match(cmd, /command -v node/); // silent no-op guard when node absent
+});

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "throughline",
+  "description": "The backlog that remembers why, not just what. Anti-drift phase handoffs for fresh sessions.",
+  "owner": { "name": "Enrique Aylagas", "url": "https://github.com/enriqueaylagas" },
+  "plugins": [
+    {
+      "name": "throughline",
+      "description": "Surfaces pending work at session start; hands phased work to fresh sessions without drift.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

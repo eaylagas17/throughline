@@ -1,0 +1,7 @@
+{
+  "name": "throughline",
+  "version": "0.1.0",
+  "description": "Keep the throughline across every session (Codex adapter).",
+  "hooks": "./hooks/throughline-hooks.json",
+  "skills": "./skills/"
+}
