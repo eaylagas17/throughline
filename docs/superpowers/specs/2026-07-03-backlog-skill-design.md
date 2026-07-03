@@ -124,10 +124,30 @@ The `delta` per phase is the heart: **not** a re-summary of the code, only what 
 4. Implement the chosen item/phase, writing minimally via **ponytail**.
 5. Report what changed; update `status`/`phases`.
 
-## 8. Cross-tool behavior
+## 8. Distribution & adoption mechanics
 
-- **Tool-agnostic:** the file store, Capture, and Surface work anywhere that reads `AGENTS.md`/skills — including **Codex**. This satisfies the original "Claude or Codex" goal.
-- **Graceful degradation:** autonomous fan-out in Ship is first-class in Claude Code (subagents); in Codex it degrades to a single sequential agent. Same artifacts, less parallelism.
+*(Patterns studied first-hand from ponytail (72.9k★) and impeccable (43.3k★), 2026-07-03.)*
+
+**Adapter model — core once, thin adapters per host.** Behavior lives in shared `skills/*/SKILL.md` (thin routers) + `references/` + `scripts/` + a compact `AGENTS.md`. Each host gets a *thin* adapter pointing at those shared files — never a fork of the logic. Two tiers:
+- **Full tier** (skills + hooks + commands): Claude Code, Codex. Gets Surface hook, Capture/Ship skills, `/backlog` commands.
+- **Instruction tier** (copied rule aligned to `AGENTS.md`): Cursor, Windsurf, Copilot, etc. Capture/Surface concepts as always-on rules; no hook, no autonomous Ship.
+
+**Concrete manifests (format now known):**
+- `.claude-plugin/plugin.json` — `name`, `version`, `description`, `author`, `homepage`, and pointers `"hooks": "./hooks/backlog-hooks.json"`, `"skills": "./skills/"`.
+- `.claude-plugin/marketplace.json` — `$schema: anthropic.com/claude-code/marketplace.schema.json`, `owner`, `plugins:[{name, description, source:"./", category:"productivity"}]`. Enables `/plugin marketplace add <user>/<repo>`.
+- Surface hook: `hooks/backlog-hooks.json` maps `SessionStart` (matcher `startup|resume|clear|compact`) → `node ${CLAUDE_PLUGIN_ROOT}/hooks/backlog-surface.js`, `timeout` small, graceful no-op if `node` absent.
+
+**Install UX** (mirror ponytail): `/plugin marketplace add <user>/backlog` then `/plugin install …` for Claude Code; `codex plugin marketplace add …` for Codex; `AGENTS.md` copy for the rest.
+
+**Cross-tool degradation:** autonomous fan-out in Ship is first-class in Claude Code (subagents); Codex degrades to a single sequential agent; instruction-tier hosts do Capture/Surface only. Same files, less automation — never a logic fork.
+
+## 8b. Adoption deliverables (first-class, not afterthoughts)
+
+Learned from why these skills spread — each is a real work item in the plan:
+- **Sticky one-liner + honest lineage** in the README: "Task Master / Backlog.md store *tasks*; superpowers persists *phases*; backlog adds the layer they don't — capture fidelity, startup surfacing, anti-drift handoff." Position against prior art honestly; don't claim to be first.
+- **Proof-in-repo.** A reproducible `benchmarks/` demo of acceptance scenario #2: a fresh session drifting on a hand-written paste-prompt vs. staying faithful via backlog, scored on fidelity to the plan. This is our quotable, honest number — with method and limitations stated (ponytail even walked back an inflated figure publicly; that honesty *is* the trust signal).
+- **`examples/`** — concrete parked-item and phase-handoff before/afters.
+- **30-second install** placed prominently; polish signals (README badges, a `LICENSE`, clear `description` frontmatter for discoverability).
 
 ## 9. Safety & trust carve-outs
 
@@ -158,13 +178,17 @@ Overlap we accept: Backlog.md/Task Master also store tasks; superpowers plans al
 
 ## 12. Scope
 
-**v1 (in):** per-project `.backlog/` store; Capture (park + checkpoint); Surface hook; Ship (single chosen item, re-validate, ponytail, gap-resolution, report); anchors (SHA + files + optional plan ref); drift flag; safety carve-outs; Claude Code first-class + Codex-compatible store/capture/surface.
+**v1 (in):**
+- *Behavior:* per-project `.backlog/` store; Capture (park + checkpoint); Surface hook; Ship (single chosen item, re-validate, ponytail, gap-resolution, report); anchors (SHA + files + optional plan ref); drift flag; safety carve-outs.
+- *Distribution:* Claude Code (full: hook+skills+commands) + Codex (full) + `AGENTS.md` instruction-tier fallback; `plugin.json` + `marketplace.json`; thin adapters only.
+- *Adoption:* README (one-liner + honest lineage + install), a reproducible handoff-fidelity benchmark, `examples/`, `LICENSE`.
 
-**Deferred:** parallel fan-out across *multiple* items at once; global/cross-project backlog; automatic drift *repair* (v1 only flags); web/kanban UI (Backlog.md territory — don't reinvent); non-git anchoring.
+**Deferred:** parallel fan-out across *multiple* items at once; global/cross-project backlog; automatic drift *repair* (v1 only flags); web/kanban UI (Backlog.md territory — don't reinvent); non-git anchoring; the long tail of instruction-tier harness adapters (Cursor/Windsurf/etc.) beyond the `AGENTS.md` fallback; a landing page/site.
 
 ## 13. Open decisions (resolve during planning)
 
-1. **Name.** `backlog` collides with Backlog.md; a name evoking the hero (drift-proof handoff) may be more distinctive and searchable.
-2. **Script language** for `list-items` / `drift-check` (shell vs node vs python) — pick for zero-dependency portability.
-3. **Hook mechanics** — exact session-start injection format and how compact the Surface summary should be to avoid context cost.
-4. **`AGENTS.md` integration** for the Codex path — how Capture/Surface register without a hook system.
+1. **Name (elevated).** `backlog` collides with Backlog.md; a name evoking the hero (drift-proof handoff / "remembers why") is more distinctive and searchable, and — per the study — the one-liner/persona is a real adoption lever. Decide before the first commit of code.
+2. **Proof metric.** The exact fidelity score for the handoff benchmark (e.g. plan-adherence rubric, count of drifted phases across N trials) and a fair baseline (hand-written paste-prompt). Must be honest and reproducible.
+3. **Script language.** ponytail and impeccable both use Node for hooks/scripts and assume `node` on PATH (degrading quietly if absent). Lean Node for `backlog-surface` / `list-items` / `drift-check` unless a reason to differ surfaces.
+
+*Resolved by the study:* hook format (`plugin.json` → `hooks/*.json` → `SessionStart` matcher), manifest schema, and `AGENTS.md` instruction-tier integration are now known patterns — no longer open.
