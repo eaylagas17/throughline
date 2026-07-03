@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, basename } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { parseItem, listItems, findStore } from '../scripts/lib/store.mjs';
 
 const SAMPLE = `---
@@ -147,4 +148,27 @@ intent: after phases block
   const it = parseItem(src);
   assert.deepEqual(it.phases, [{ name: 'Phase 1', status: 'done' }]);
   assert.equal(it.intent, 'after phases block');
+});
+
+import { headSha, changedFilesSince, gitRoot } from '../scripts/lib/git.mjs';
+
+test('git helpers work in a real temp repo, degrade elsewhere', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'tlgit-'));
+  const g = (...a) => execFileSync('git', a, { cwd: dir, stdio: 'pipe' });
+  g('init', '-q');
+  g('config', 'user.email', 't@t.t');
+  g('config', 'user.name', 'T');
+  writeFileSync(join(dir, 'a.txt'), '1');
+  g('add', '.'); g('commit', '-qm', 'one');
+  const first = headSha(dir);
+  assert.match(first, /^[0-9a-f]{7,40}$/);
+  writeFileSync(join(dir, 'a.txt'), '2');
+  g('add', '.'); g('commit', '-qm', 'two');
+  assert.deepEqual(changedFilesSince(dir, first), ['a.txt']);
+  assert.ok(gitRoot(dir).endsWith(basename(dir)));
+
+  const nogit = mkdtempSync(join(tmpdir(), 'nogit-'));
+  assert.equal(headSha(nogit), '');
+  assert.deepEqual(changedFilesSince(nogit, 'abc'), []);
+  assert.equal(gitRoot(nogit), null);
 });
