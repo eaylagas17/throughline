@@ -1,8 +1,8 @@
-# `/backlog` — Design Spec
+# `/throughline` — Design Spec
 
 **Date:** 2026-07-03
 **Status:** Approved for planning
-**Working name:** `backlog` (final name is an open decision — see §12)
+**Name:** `throughline` (decided 2026-07-03) — the single thread that runs *through* every phase of a build; the thing a fresh session must not lose. One-liner: *"Keep the throughline across every session."*
 
 ---
 
@@ -25,8 +25,8 @@ This space is crowded (Task Master, Backlog.md, spec-kit, superpowers plans, Cla
 
 The seam nobody owns is **capture fidelity + proactive surfacing + anti-drift handoff**:
 
-- **One sharp opinion:** *the backlog that remembers **why**, not just **what**.*
-- **Hero demo:** *fresh-session phase handoffs that don't lose the plot.* The backlog is the container; drift-proof handoff is what makes people install it.
+- **Name & one-liner:** **throughline** — *keep the plan's throughline across every session; it remembers **why**, not just **what**.*
+- **Hero demo:** *fresh-session phase handoffs that don't lose the plot.* Your throughline (the list of pending work) is the container; the drift-proof handoff is what makes people install it.
 - **Adoption formula** (learned from ponytail ~73k★ / impeccable ~43k★): one sharp opinion, universal & stack-independent pain, **automatic trigger** (greets you — not `task-master next`), near-zero setup, a trust carve-out, a quotable claim.
 
 **Reuse, don't reinvent** (ponytail's own first rung): compose ponytail (minimal writing), the superpowers plan format (phase breakdown), and subagent execution. Our value-add is the layer none of them have: capture the irreducible context, surface it at startup, hand off without drift.
@@ -44,8 +44,8 @@ The seam nobody owns is **capture fidelity + proactive surfacing + anti-drift ha
 
 | Moment | Trigger | Primitive | Responsibility |
 |---|---|---|---|
-| **Surface** | session start | **session-start hook** | Inject a compact, phase-aware summary of the backlog into a fresh session. Nothing runs. This is the auto-trigger that beats pull-based tools. |
-| **Capture** | `/backlog add`, "backlog this", or `/backlog checkpoint` | **skill** (two flavors) | **Park:** harvest executable context from the live conversation for a *later* item. **Checkpoint:** produce a drift-resistant handoff at a phase boundary. |
+| **Surface** | session start | **session-start hook** | Inject a compact, phase-aware summary of the open items (your throughline) into a fresh session. Nothing runs. This is the auto-trigger that beats pull-based tools. |
+| **Capture** | `/throughline add`, "park this", or `/throughline checkpoint` | **skill** (two flavors) | **Park:** harvest executable context from the live conversation for a *later* item. **Checkpoint:** produce a drift-resistant handoff at a phase boundary. |
 | **Ship** | you pick an item | **skill** | Cold-start an item: reconstruct from anchors, re-validate against plan, resolve gaps, write minimally via ponytail, report, update status. May fan out subagents for the chosen item's work. |
 
 ## 5. Architecture (repo layout)
@@ -53,28 +53,29 @@ The seam nobody owns is **capture fidelity + proactive surfacing + anti-drift ha
 One installable plugin:
 
 ```
-backlog/
-├── README.md                       ← the sharp pitch + 30-second install
-├── .claude-plugin/plugin.json      ← makes it one installable unit
+throughline/
+├── README.md                          ← the sharp pitch + 30-second install
+├── .claude-plugin/plugin.json         ← makes it one installable unit
 ├── hooks/
-│   └── session-start.*             ← SURFACE (the auto-greeting)
+│   ├── throughline-hooks.json         ← event map (SessionStart → surface)
+│   └── throughline-surface.js         ← SURFACE (the auto-greeting)
 ├── skills/
-│   ├── backlog-capture/SKILL.md    ← CAPTURE (park + checkpoint)
-│   └── backlog-ship/SKILL.md       ← SHIP (cold-start resume + re-validate)
+│   ├── throughline-capture/SKILL.md   ← CAPTURE (park + checkpoint)
+│   └── throughline-ship/SKILL.md      ← SHIP (cold-start resume + re-validate)
 ├── commands/
-│   └── backlog.md                  ← /backlog entry point (list / add / checkpoint / ship)
+│   └── throughline.md                 ← /throughline entry point (list / add / checkpoint / ship)
 ├── scripts/
-│   ├── list-items.*                ← mechanical: read + render the backlog
-│   └── drift-check.*               ← mechanical: anchor SHA vs HEAD staleness
+│   ├── list-items.*                   ← mechanical: read + render the throughline
+│   └── drift-check.*                  ← mechanical: anchor SHA vs HEAD staleness
 └── references/
-    └── item-schema.md              ← shared parked-item format
+    └── item-schema.md                 ← shared parked-item format
 ```
 
 Same spirit as impeccable (one repo, several coordinated pieces) — but the pieces match their triggers. **Surface is a hook, not a skill**, or the flagship feature evaporates.
 
 ## 6. Data model
 
-**Storage:** a `.backlog/` folder inside each *consuming* project (not this plugin repo), one Markdown file per item (YAML frontmatter + body). Rich context needs room; one-file-per-item is git-diffable and lets each item carry its own material. Committable (team-shared) or gitignorable (personal) — user's choice.
+**Storage:** a `.throughline/` folder inside each *consuming* project (not this plugin repo), one Markdown file per item (YAML frontmatter + body). Rich context needs room; one-file-per-item is git-diffable and lets each item carry its own material. Committable (team-shared) or gitignorable (personal) — user's choice.
 
 **Item schema (both atomic and phased):**
 
@@ -129,23 +130,23 @@ The `delta` per phase is the heart: **not** a re-summary of the code, only what 
 *(Patterns studied first-hand from ponytail (72.9k★) and impeccable (43.3k★), 2026-07-03.)*
 
 **Adapter model — core once, thin adapters per host.** Behavior lives in shared `skills/*/SKILL.md` (thin routers) + `references/` + `scripts/` + a compact `AGENTS.md`. Each host gets a *thin* adapter pointing at those shared files — never a fork of the logic. Two tiers:
-- **Full tier** (skills + hooks + commands): Claude Code, Codex. Gets Surface hook, Capture/Ship skills, `/backlog` commands.
+- **Full tier** (skills + hooks + commands): Claude Code, Codex. Gets Surface hook, Capture/Ship skills, `/throughline` commands.
 - **Instruction tier** (copied rule aligned to `AGENTS.md`): Cursor, Windsurf, Copilot, etc. Capture/Surface concepts as always-on rules; no hook, no autonomous Ship.
 
 **Concrete manifests (format now known):**
-- `.claude-plugin/plugin.json` — `name`, `version`, `description`, `author`, `homepage`, and pointers `"hooks": "./hooks/backlog-hooks.json"`, `"skills": "./skills/"`.
+- `.claude-plugin/plugin.json` — `name`, `version`, `description`, `author`, `homepage`, and pointers `"hooks": "./hooks/throughline-hooks.json"`, `"skills": "./skills/"`.
 - `.claude-plugin/marketplace.json` — `$schema: anthropic.com/claude-code/marketplace.schema.json`, `owner`, `plugins:[{name, description, source:"./", category:"productivity"}]`. Enables `/plugin marketplace add <user>/<repo>`.
-- Surface hook: `hooks/backlog-hooks.json` maps `SessionStart` (matcher `startup|resume|clear|compact`) → `node ${CLAUDE_PLUGIN_ROOT}/hooks/backlog-surface.js`, `timeout` small, graceful no-op if `node` absent.
+- Surface hook: `hooks/throughline-hooks.json` maps `SessionStart` (matcher `startup|resume|clear|compact`) → `node ${CLAUDE_PLUGIN_ROOT}/hooks/throughline-surface.js`, `timeout` small, graceful no-op if `node` absent.
 
-**Install UX** (mirror ponytail): `/plugin marketplace add <user>/backlog` then `/plugin install …` for Claude Code; `codex plugin marketplace add …` for Codex; `AGENTS.md` copy for the rest.
+**Install UX** (mirror ponytail): `/plugin marketplace add <user>/throughline` then `/plugin install …` for Claude Code; `codex plugin marketplace add …` for Codex; `AGENTS.md` copy for the rest.
 
 **Cross-tool degradation:** autonomous fan-out in Ship is first-class in Claude Code (subagents); Codex degrades to a single sequential agent; instruction-tier hosts do Capture/Surface only. Same files, less automation — never a logic fork.
 
 ## 8b. Adoption deliverables (first-class, not afterthoughts)
 
 Learned from why these skills spread — each is a real work item in the plan:
-- **Sticky one-liner + honest lineage** in the README: "Task Master / Backlog.md store *tasks*; superpowers persists *phases*; backlog adds the layer they don't — capture fidelity, startup surfacing, anti-drift handoff." Position against prior art honestly; don't claim to be first.
-- **Proof-in-repo.** A reproducible `benchmarks/` demo of acceptance scenario #2: a fresh session drifting on a hand-written paste-prompt vs. staying faithful via backlog, scored on fidelity to the plan. This is our quotable, honest number — with method and limitations stated (ponytail even walked back an inflated figure publicly; that honesty *is* the trust signal).
+- **Sticky one-liner + honest lineage** in the README: "Task Master / Backlog.md store *tasks*; superpowers persists *phases*; throughline adds the layer they don't — capture fidelity, startup surfacing, anti-drift handoff." Position against prior art honestly; don't claim to be first.
+- **Proof-in-repo.** A reproducible `benchmarks/` demo of acceptance scenario #2: a fresh session drifting on a hand-written paste-prompt vs. staying faithful via throughline, scored on fidelity to the plan. This is our quotable, honest number — with method and limitations stated (ponytail even walked back an inflated figure publicly; that honesty *is* the trust signal).
 - **`examples/`** — concrete parked-item and phase-handoff before/afters.
 - **30-second install** placed prominently; polish signals (README badges, a `LICENSE`, clear `description` frontmatter for discoverability).
 
@@ -179,7 +180,7 @@ Overlap we accept: Backlog.md/Task Master also store tasks; superpowers plans al
 ## 12. Scope
 
 **v1 (in):**
-- *Behavior:* per-project `.backlog/` store; Capture (park + checkpoint); Surface hook; Ship (single chosen item, re-validate, ponytail, gap-resolution, report); anchors (SHA + files + optional plan ref); drift flag; safety carve-outs.
+- *Behavior:* per-project `.throughline/` store; Capture (park + checkpoint); Surface hook; Ship (single chosen item, re-validate, ponytail, gap-resolution, report); anchors (SHA + files + optional plan ref); drift flag; safety carve-outs.
 - *Distribution:* Claude Code (full: hook+skills+commands) + Codex (full) + `AGENTS.md` instruction-tier fallback; `plugin.json` + `marketplace.json`; thin adapters only.
 - *Adoption:* README (one-liner + honest lineage + install), a reproducible handoff-fidelity benchmark, `examples/`, `LICENSE`.
 
@@ -187,8 +188,7 @@ Overlap we accept: Backlog.md/Task Master also store tasks; superpowers plans al
 
 ## 13. Open decisions (resolve during planning)
 
-1. **Name (elevated).** `backlog` collides with Backlog.md; a name evoking the hero (drift-proof handoff / "remembers why") is more distinctive and searchable, and — per the study — the one-liner/persona is a real adoption lever. Decide before the first commit of code.
-2. **Proof metric.** The exact fidelity score for the handoff benchmark (e.g. plan-adherence rubric, count of drifted phases across N trials) and a fair baseline (hand-written paste-prompt). Must be honest and reproducible.
-3. **Script language.** ponytail and impeccable both use Node for hooks/scripts and assume `node` on PATH (degrading quietly if absent). Lean Node for `backlog-surface` / `list-items` / `drift-check` unless a reason to differ surfaces.
+1. **Proof metric.** The exact fidelity score for the handoff benchmark (e.g. plan-adherence rubric, count of drifted phases across N trials) and a fair baseline (hand-written paste-prompt). Must be honest and reproducible.
+2. **Script language.** ponytail and impeccable both use Node for hooks/scripts and assume `node` on PATH (degrading quietly if absent). Lean Node for `throughline-surface` / `list-items` / `drift-check` unless a reason to differ surfaces.
 
-*Resolved by the study:* hook format (`plugin.json` → `hooks/*.json` → `SessionStart` matcher), manifest schema, and `AGENTS.md` instruction-tier integration are now known patterns — no longer open.
+*Resolved:* **name = `throughline`** (2026-07-03); hook format (`plugin.json` → `hooks/*.json` → `SessionStart` matcher), manifest schema, and `AGENTS.md` instruction-tier integration are now known patterns.
