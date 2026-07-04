@@ -24,3 +24,12 @@ test('hooks matcher covers startup|resume|clear|compact', () => {
   assert.match(start.hooks[0].args.join(' '), /throughline-surface\.mjs/);
   assert.match(start.hooks[0].args.join(' '), /\$\{CLAUDE_PLUGIN_ROOT\}/);
 });
+
+test('capture SKILL.md has frontmatter name + description and references the schema', () => {
+  const s = readFileSync('skills/throughline-capture/SKILL.md', 'utf8');
+  assert.match(s, /^---\nname: throughline-capture\n/);
+  assert.match(s, /description:/);
+  assert.match(s, /new-item\.mjs/);
+  assert.match(s, /item-schema\.md/);
+  assert.match(s, /checkpoint/i);
+});
