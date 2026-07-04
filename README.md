@@ -86,21 +86,35 @@ question. Nothing to re-explain. More worked before/afters live in [`examples/`]
 
 ## Does it hold up?
 
-A reproducible, zero-dependency benchmark ([`benchmarks/`](./benchmarks)) hands the
-phase-handoff scenario above to fresh agents in two arms: one gets the prose paste-prompt, one
-gets the throughline item. Same code, same task, scored on a fixed plan-adherence rubric,
-N=10 per arm (two runs of five):
+A prose paste-prompt is a soft baseline. The honest question is whether throughline beats the
+tools you would actually reach for, so the benchmark ([`benchmarks/`](./benchmarks)) pits it
+against a plan file (or Task Master, or a prose pointer to the plan) and against Claude memory,
+scored on whether a fresh session keeps a constraint a later phase still needs.
 
-- **Prose paste-prompt:** deleted the still-needed server auth path (the planted drift) in
-  **9 of 10** runs, which would have broken the mobile app.
-- **throughline item:** kept it in **10 of 10**, and every run's re-validate step named the
-  temptation and refused it, citing the plan.
+**When the fact is written in the plan, everything holds.** A plan file, Claude memory, and
+throughline all keep the constraint. throughline's re-validate step adds nothing there, and we
+say so: drift only appears when the handoff *loses* the fact.
 
-The method and limitations are stated in full: it is a subagent proxy rather than full
-sessions, N is small, one baseline run kept the path on its own (the honest counter-case), and
-the digits will move when you re-run it (the direction should not). The number is honest and
-re-runnable, not a marketing figure. Method, rubric, and caveats live in
-[`benchmarks/README.md`](./benchmarks).
+**When a fact is discovered mid-build and contradicts the plan, the plan itself becomes the
+trap.** It now says the wrong thing, so every plan-based approach follows it:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="benchmarks/stale-dark.svg">
+  <img src="benchmarks/stale-light.svg" width="680" alt="When the plan goes stale: throughline kept a field an external webhook needs in 5 of 5 runs; plan-based tools (a plan file, Task Master, or a prose pointer to the plan) kept it in 0 of 5.">
+</picture>
+
+A plan file, Task Master, and a prose pointer to the plan all faithfully deleted a field an
+external webhook still needed, because the plan said to: **0 of 5**. throughline kept it in
+**5 of 5**, because its per-phase *delta* captured the discovery and overrode the stale plan.
+
+So the edge is precise. Over a plan file or Task Master: throughline survives the plan going
+stale. Over Claude memory: the edge is not drift-prevention (memory ties it once it holds the
+fact) but **deliberate capture** (the checkpoint makes the discovery reliable), **session-start
+surfacing** (memory does not greet you with pending work), and per-project, committable structure.
+
+Honest proxy: subagent runs rather than full sessions, N small, one model across arms, every bar
+from an actual run. Full method and results, including the scenarios where throughline ties, live
+in [`benchmarks/README.md`](./benchmarks).
 
 ## Honest lineage
 
@@ -116,6 +130,22 @@ It doesn't reinvent a task store, a planner, or an executor. It *composes* what 
 (minimal-code writing, the phase-plan format, subagent execution) and adds the one seam nobody
 owns. If those three aren't meaningfully smoother than the DIY stack, the plugin is redundant.
 That's the bar it holds itself to.
+
+## How it compares
+
+The biggest categorical difference: throughline **greets you with your pending work the moment a
+session starts** (or after `/clear`). Memory recalls facts when they seem relevant; a plan file
+waits to be opened; throughline surfaces the backlog unprompted, then waits for you to pick.
+
+|  | throughline | Claude memory | Plan file / Task Master | Prose paste |
+|---|:--:|:--:|:--:|:--:|
+| Greets you with pending work at session start | yes | no | no | no |
+| Holds when the plan goes **stale** (captures superseding deltas) | yes | if remembered | no | no |
+| Deliberate, structured capture of the *why* | yes | incidental | plan only | no |
+| Per-project, committable, team-shared | yes | no | varies | no |
+
+For a fact already correct in the plan, memory and a plan file do just as well. throughline earns
+its place on the rows above, not by preventing drift the plan already prevents.
 
 ## Composes with superpowers
 

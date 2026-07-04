@@ -27,6 +27,42 @@ exception is the honest edge of this result, not a footnote to bury.
 
 Full per-run log: [`results.md`](./results.md). Reproduce it yourself: [`RUNBOOK.md`](./RUNBOOK.md).
 
+## Against the real alternatives (the 4-arm run)
+
+A prose paste-prompt is a soft baseline. A second run pits throughline against the tools you
+would actually use: a plan file (also standing in for Task Master or a prose pointer to the
+plan) and Claude memory. Four arms, three scenarios, N=5 per arm, same model (Haiku 4.5),
+reasoning-only. Kept the must-keep constraint:
+
+| Scenario | prose | Claude memory | plan file | throughline |
+|---|:--:|:--:|:--:|:--:|
+| Auth (fact in plan) | 5/5 | 5/5 | 5/5 | 5/5 |
+| Feature flags (fact in plan) | 0/5 | 5/5 | 5/5 | 5/5 |
+| API field (discovered, contradicts plan) | 0/5 | 5/5 | **0/5** | 5/5 |
+
+Read it honestly:
+
+- **When the fact is in the plan** (Auth, Feature flags), a plan file, memory, and throughline
+  all hold. throughline's re-validate gate adds nothing there. Drift only appears when the
+  handoff *loses* the fact (the prose arm on Feature flags).
+- **When a fact is discovered mid-build and contradicts the plan** (API field), the plan file
+  scores **0/5**: it faithfully deletes a field an external webhook still parses, because the
+  plan says to, and breaks production. throughline holds **5/5** because its per-phase delta
+  captured the discovery and overrode the stale plan. Memory holds too, when it happens to
+  carry the fact.
+
+So the drift metric does not separate throughline from anything that already holds the fact; it
+only beats a handoff that lost it. throughline's defensible edges are narrower and real:
+
+- **Over a plan file or Task Master:** it survives the plan going stale (the delta overrides it).
+- **Over Claude memory:** not drift-prevention (memory ties once it has the fact), but deliberate
+  structured capture (the checkpoint makes the discovery reliable), session-start surfacing
+  (memory does not greet you with pending work), and a per-project, committable, team-shared store.
+
+Caveats specific to this run: the memory arm was *given* the fact as a recalled note, so it
+reflects memory's best case, not its real capture reliability. N is small (5 per cell) and the
+values land binary (0 or 5). One model, reasoning-only (no files touched).
+
 ## Method
 
 - **Scenario:** a three-phase "move sessions to httpOnly cookies" migration, resumed at the
