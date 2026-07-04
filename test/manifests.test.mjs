@@ -33,3 +33,11 @@ test('capture SKILL.md has frontmatter name + description and references the sch
   assert.match(s, /item-schema\.md/);
   assert.match(s, /checkpoint/i);
 });
+
+test('ship SKILL.md has frontmatter and the anti-drift protocol', () => {
+  const s = readFileSync('skills/throughline-ship/SKILL.md', 'utf8');
+  assert.match(s, /^---\nname: throughline-ship\n/);
+  assert.match(s, /re-validate/i);      // re-validate before writing
+  assert.match(s, /ponytail/i);         // minimal writing
+  assert.match(s, /drift-check\.mjs/);
+});
