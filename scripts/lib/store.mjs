@@ -3,6 +3,21 @@ import { join } from 'node:path';
 
 const ITEM_RE = /^\d{4}\.md$/;
 
+// YAML treats `#` as a comment only when preceded by whitespace (or at line
+// start). The caller's `key:\s*` match already swallows the run of
+// whitespace right after the colon, so a header line like `phases:   # x`
+// hands us a value that is JUST the comment (no leading whitespace of its
+// own) — that's the "line start" case, and the whole value is the comment.
+// A line like `sha: abc1234   # x` hands us "abc1234   # x", where the
+// comment is preceded by (interior) whitespace — the "preceded by
+// whitespace" case. Quoted values are left untouched: a `#` inside quotes
+// is data, not a comment, and stripQuotes() below handles unwrapping quotes.
+function stripInlineComment(s) {
+  if (s.startsWith('"') || s.startsWith("'")) return s;
+  if (s.startsWith('#')) return '';
+  return s.replace(/\s+#.*$/, '');
+}
+
 function stripQuotes(s) {
   const t = s.trim();
   if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
@@ -47,7 +62,7 @@ export function parseItem(text, file = '') {
       const kv = line.match(/^([A-Za-z_]+):\s*(.*)$/);
       if (!kv) continue;
       const [, key, rawVal] = kv;
-      const val = rawVal.trim();
+      const val = stripInlineComment(rawVal.trim());
       if (key === 'anchors' && val === '') { ctx = 'anchors'; continue; }
       if (key === 'phases' && val === '') { ctx = 'phases'; continue; }
       if (key === 'id') item.id = stripQuotes(val);
@@ -61,7 +76,7 @@ export function parseItem(text, file = '') {
     if (ctx === 'anchors') {
       if (anchorsFilesBlock) {
         const item2 = trimmed.match(/^-\s*(.*)$/);
-        if (item2) { item.anchors.files.push(stripQuotes(item2[1])); continue; }
+        if (item2) { item.anchors.files.push(stripQuotes(stripInlineComment(item2[1]))); continue; }
         // A non-dash line at this point means the files block ended;
         // fall through to normal anchors key handling below.
         anchorsFilesBlock = false;
@@ -69,7 +84,7 @@ export function parseItem(text, file = '') {
       const kv = trimmed.match(/^([A-Za-z_]+):\s*(.*)$/);
       if (!kv) continue;
       const [, key, rawVal] = kv;
-      const val = rawVal.trim();
+      const val = stripInlineComment(rawVal.trim());
       if (key === 'sha') item.anchors.sha = stripQuotes(val);
       else if (key === 'plan') item.anchors.plan = stripQuotes(val);
       else if (key === 'files') {
@@ -82,10 +97,10 @@ export function parseItem(text, file = '') {
 
     if (ctx === 'phases') {
       const dash = trimmed.match(/^-\s*name:\s*(.*)$/);
-      if (dash) { item.phases.push({ name: stripQuotes(dash[1]), status: '' }); continue; }
+      if (dash) { item.phases.push({ name: stripQuotes(stripInlineComment(dash[1])), status: '' }); continue; }
       const kv = trimmed.match(/^([A-Za-z_]+):\s*(.*)$/);
       if (kv && item.phases.length) {
-        if (kv[1] === 'status') item.phases[item.phases.length - 1].status = stripQuotes(kv[2]);
+        if (kv[1] === 'status') item.phases[item.phases.length - 1].status = stripQuotes(stripInlineComment(kv[2]));
         // per-phase 'delta' etc. ignored by scripts
       }
       continue;

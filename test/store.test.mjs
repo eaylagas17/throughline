@@ -150,6 +150,101 @@ intent: after phases block
   assert.equal(it.intent, 'after phases block');
 });
 
+test('parseItem strips inline YAML comments from title/status', () => {
+  const src = `---
+id: 0015
+title: Add dark mode  # one line
+status: parked   # parked | in-progress | done
+---
+`;
+  const it = parseItem(src);
+  assert.equal(it.title, 'Add dark mode');
+  assert.equal(it.status, 'parked');
+});
+
+test('parseItem strips inline YAML comments from anchors.sha and anchors.plan', () => {
+  const src = `---
+id: 0016
+title: Inline comments on nested anchors
+status: parked
+anchors:
+  sha: abc1234   # git HEAD at capture
+  plan: docs/plan.md   # source of truth for phases
+---
+`;
+  const it = parseItem(src);
+  assert.equal(it.anchors.sha, 'abc1234');
+  assert.equal(it.anchors.plan, 'docs/plan.md');
+});
+
+test('parseItem still recognizes phases: and anchors: section headers with trailing comments', () => {
+  const src = `---
+id: 0017
+title: Section headers with comments
+status: parked
+anchors:   # where the work lives
+  sha: abc1234
+  files: [src/a.ts]
+  plan: docs/plan.md
+phases:   # omit for atomic items
+  - name: Phase 1
+    status: done
+  - name: Phase 2
+    status: pending
+---
+`;
+  const it = parseItem(src);
+  assert.equal(it.anchors.sha, 'abc1234');
+  assert.deepEqual(it.anchors.files, ['src/a.ts']);
+  assert.deepEqual(it.phases, [
+    { name: 'Phase 1', status: 'done' },
+    { name: 'Phase 2', status: 'pending' },
+  ]);
+});
+
+test('parseItem strips inline comment after inline files list', () => {
+  const src = `---
+id: 0018
+title: Inline files with trailing comment
+status: parked
+anchors:
+  files: [a, b]  # c
+---
+`;
+  const it = parseItem(src);
+  assert.deepEqual(it.anchors.files, ['a', 'b']);
+});
+
+test('parseItem strips inline comments from phase name and status lines', () => {
+  const src = `---
+id: 0020
+title: Phase lines with trailing comments
+status: parked
+phases:
+  - name: Phase 1 — tokens  # first phase
+    status: done   # complete
+  - name: Phase 2  # second phase
+    status: pending   # not started
+---
+`;
+  const it = parseItem(src);
+  assert.deepEqual(it.phases, [
+    { name: 'Phase 1 — tokens', status: 'done' },
+    { name: 'Phase 2', status: 'pending' },
+  ]);
+});
+
+test('parseItem preserves a hash inside a quoted title', () => {
+  const src = `---
+id: 0019
+title: "Fix #42"
+status: parked
+---
+`;
+  const it = parseItem(src);
+  assert.equal(it.title, 'Fix #42');
+});
+
 import { headSha, changedFilesSince, gitRoot } from '../scripts/lib/git.mjs';
 
 test('git helpers work in a real temp repo, degrade elsewhere', () => {

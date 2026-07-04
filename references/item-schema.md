@@ -13,8 +13,7 @@ re-read from the code or the plan file. Do not restate what the diff already sho
 id: 0007                     # 4-digit, assigned by scripts/new-item.mjs
 title: Add dark mode toggle  # one line
 status: parked               # parked | in-progress | done
-intent: |                    # what + WHY it matters (the part that evaporates)
-  Night-shift users asked for it; must not touch the existing print stylesheet.
+intent: "Night-shift users asked for it; must not touch the existing print stylesheet"
 decisions:                   # settled choices a cold session MUST respect
   - "CSS variables only, no theme library (bundle budget)"
 open_questions:              # unresolved — Ship asks ONLY these
