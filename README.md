@@ -236,11 +236,6 @@ throughline is aggressive about *context*, never about *risk*:
   thin adapter, never a fork. Claude Code and Codex get the full tier (hook + skills + commands);
   instruction-tier hosts get the conventions via `AGENTS.md`.
 
-## Design docs
-
-- Design spec: [`docs/superpowers/specs/2026-07-03-throughline-design.md`](./docs/superpowers/specs/2026-07-03-throughline-design.md)
-- Core-plugin plan: [`docs/superpowers/plans/2026-07-03-throughline-core-plugin.md`](./docs/superpowers/plans/2026-07-03-throughline-core-plugin.md)
-
 ## License
 
 [MIT](./LICENSE) © 2026 Enrique Aylagas

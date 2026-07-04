@@ -15,8 +15,7 @@ One-liner: *"Keep the throughline across every session."* Hero: drift-proof phas
 - **Runtime store:** `.throughline/NNNN.md` in the *consuming* project (per-project). This repo dogfoods itself, so its own backlog lives in `.throughline/`.
 
 ## Where context lives (source of truth)
-- **Design spec:** `docs/superpowers/specs/2026-07-03-throughline-design.md`
-- **Core-plugin plan (built):** `docs/superpowers/plans/2026-07-03-throughline-core-plugin.md`
+- **Design spec & plans:** `docs/superpowers/specs/` and `docs/superpowers/plans/` maintained **locally only** (git-ignored, not in the public repo).
 - **Current backlog:** `.throughline/0001.md`. The throughline plugin surfaces this at session start.
 - **Build history & decisions:** `.superpowers/sdd/progress.md` (git-ignored local ledger).
 
