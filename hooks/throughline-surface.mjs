@@ -17,10 +17,20 @@ export function buildSurface({ storeDir, cwd, headSha = realHeadSha, changedFile
   return renderSurface(items);
 }
 
+// SessionStart additionalContext goes to Claude, not the user's view — so we must
+// instruct Claude to relay it, or the "greets you" surfacing stays invisible.
+export function surfaceContext(summary) {
+  if (!summary) return null;
+  return `The throughline plugin loaded this project's pending backlog at session start. `
+    + `Open your first reply to the user by showing them this backlog verbatim, then wait `
+    + `for them to pick an item — do not begin any work until they choose one.\n\n${summary}`;
+}
+
 function emit(summary) {
-  if (!summary) return; // silent no-op: never nag
+  const context = surfaceContext(summary);
+  if (!context) return; // silent no-op: never nag
   process.stdout.write(JSON.stringify({
-    hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: summary },
+    hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: context },
   }) + '\n');
 }
 

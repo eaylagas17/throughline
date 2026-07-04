@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildSurface } from '../hooks/throughline-surface.mjs';
+import { buildSurface, surfaceContext } from '../hooks/throughline-surface.mjs';
 
 function storeWith(files) {
   const dir = mkdtempSync(join(tmpdir(), 'surf-'));
@@ -33,4 +33,16 @@ test('lists items and marks a stale one', () => {
   assert.match(out, /0002/);
   assert.match(out, /stale/i);           // 0002 anchored file changed
   assert.doesNotMatch(out.split('Old')[0], /stale/i); // 0001 not stale
+});
+
+test('surfaceContext: empty summary → null (silent no-op)', () => {
+  assert.equal(surfaceContext(''), null);
+  assert.equal(surfaceContext(null), null);
+});
+
+test('surfaceContext: wraps the summary with a directive to show the user', () => {
+  const ctx = surfaceContext('📌 throughline — 1 open item');
+  assert.match(ctx, /showing them this backlog/i);   // tells Claude to relay it visibly
+  assert.match(ctx, /do not begin any work until they choose/i); // preserves "nothing runs until you pick"
+  assert.match(ctx, /📌 throughline — 1 open item/); // the summary is still included verbatim
 });
