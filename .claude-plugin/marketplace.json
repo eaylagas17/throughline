@@ -2,7 +2,7 @@
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "throughline",
   "description": "The backlog that remembers why, not just what. Anti-drift phase handoffs for fresh sessions.",
-  "owner": { "name": "Enrique Aylagas", "url": "https://github.com/enriqueaylagas" },
+  "owner": { "name": "Enrique Aylagas", "url": "https://github.com/eaylagas17" },
   "plugins": [
     {
       "name": "throughline",

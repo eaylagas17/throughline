@@ -4,9 +4,9 @@
   "description": "Keep the throughline across every session. Surfaces your project backlog at session start and hands phased work to fresh sessions without drift.",
   "author": {
     "name": "Enrique Aylagas",
-    "url": "https://github.com/enriqueaylagas"
+    "url": "https://github.com/eaylagas17"
   },
-  "homepage": "https://github.com/enriqueaylagas/throughline",
+  "homepage": "https://github.com/eaylagas17/throughline",
   "hooks": "./hooks/throughline-hooks.json",
   "skills": "./skills/"
 }
