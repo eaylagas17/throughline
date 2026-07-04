@@ -35,4 +35,5 @@ test('stale item shows a marker', () => {
     stale: true, staleReason: 'anchored files changed',
   }]);
   assert.match(out, /stale/i);
+  assert.match(out, /anchored files changed/);
 });

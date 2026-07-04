@@ -12,7 +12,7 @@ export function nextId(items) {
 export function scaffold({ id, title, sha }) {
   return `---
 id: ${id}
-title: ${title}
+title: ${JSON.stringify(title)}
 status: parked
 # intent: what + why it matters (fill in)
 intent: ""

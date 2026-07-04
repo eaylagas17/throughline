@@ -16,7 +16,7 @@ test('scaffold contains the required frontmatter keys', () => {
   const s = scaffold({ id: '0001', title: 'Add search', sha: 'abc1234' });
   assert.match(s, /^---\n/);
   assert.match(s, /id: 0001/);
-  assert.match(s, /title: Add search/);
+  assert.match(s, /title: "Add search"/);
   assert.match(s, /status: parked/);
   assert.match(s, /sha: abc1234/);
   assert.match(s, /intent:/);
@@ -29,7 +29,7 @@ test('main creates .throughline/NNNN.md with stamped sha', () => {
   assert.ok(existsSync(path));
   assert.match(path, /\.throughline\/0001\.md$/);
   const txt = readFileSync(path, 'utf8');
-  assert.match(txt, /title: Add dark mode/);
+  assert.match(txt, /title: "Add dark mode"/);
   assert.match(txt, /sha: deadbee/);
 });
 
@@ -52,6 +52,14 @@ test('scaffold round-trips cleanly through parseItem', () => {
   assert.deepEqual(item.phases, []);
   assert.equal(item.id, '0001');
   assert.equal(item.title, 'Add search');
+});
+
+test('scaffold quotes the title so a "#" does not truncate it as a YAML comment', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cap4-'));
+  const path = main(['Fix', '#42', 'crash', 'on', 'save'], { cwd, headSha: () => 'abc', gitRoot: () => null });
+  const txt = readFileSync(path, 'utf8');
+  const item = parseItem(txt, path);
+  assert.equal(item.title, 'Fix #42 crash on save');
 });
 
 test('importing new-item.mjs with no argv[1] does not crash', () => {

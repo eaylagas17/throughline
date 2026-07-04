@@ -245,6 +245,52 @@ status: parked
   assert.equal(it.title, 'Fix #42');
 });
 
+test('parseItem skips a phase delta block scalar body so it cannot corrupt real phases', () => {
+  const src = `---
+id: 0022
+title: Block scalar in phase delta
+status: parked
+phases:
+  - name: Phase 1
+    status: done
+    delta: |
+      Some prose describing what happened.
+      status: not really done
+      - name: fake phase
+  - name: Phase 2
+    status: pending
+---
+`;
+  const it = parseItem(src);
+  assert.equal(it.phases.length, 2);
+  assert.equal(it.phases[0].status, 'done');
+  assert.equal(it.phases[1].status, 'pending');
+});
+
+test('parseItem skips a top-level block scalar body (intent: |) without swallowing the next key', () => {
+  const src = `---
+id: 0023
+title: Block scalar intent
+intent: |
+  This is a long explanation
+  status: fake status line
+  spanning several lines.
+status: parked
+---
+`;
+  const it = parseItem(src);
+  assert.equal(it.intent, '');
+  assert.equal(it.status, 'parked');
+});
+
+test('parseItem normalizes a leading BOM and CRLF line endings', () => {
+  const src = '﻿---\r\nid: 0021\r\ntitle: CRLF item\r\nstatus: parked\r\nanchors:\r\n  sha: def5678\r\n---\r\n';
+  const it = parseItem(src);
+  assert.equal(it.title, 'CRLF item');
+  assert.equal(it.status, 'parked');
+  assert.equal(it.anchors.sha, 'def5678');
+});
+
 import { headSha, changedFilesSince, gitRoot } from '../scripts/lib/git.mjs';
 
 test('git helpers work in a real temp repo, degrade elsewhere', () => {

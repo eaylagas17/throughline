@@ -34,8 +34,18 @@ function parseInlineList(s) {
   return inner.split(',').map(x => stripQuotes(x));
 }
 
+// A YAML block scalar header: `|` or `>`, optionally followed by a chomping
+// indicator (`-`/`+`) and/or an explicit indent indicator (1-9), in either
+// order (`|-`, `|2`, `|-2`, `|2-`, ...). Anything after inline-comment
+// stripping that matches this is NOT a plain scalar value — it introduces a
+// multi-line body on the following, more-indented lines.
+function isBlockScalarHeader(s) {
+  return /^[|>](?:[+-]?[1-9]?|[1-9]?[+-]?)$/.test(s.trim());
+}
+
 // Minimal, tolerant frontmatter reader for the SHALLOW fields only.
 export function parseItem(text, file = '') {
+  text = text.replace(/^﻿/, '').replace(/\r\n/g, '\n');
   const item = {
     id: '', title: '', status: '', intent: '',
     anchors: { sha: '', files: [], plan: '' },
@@ -46,11 +56,22 @@ export function parseItem(text, file = '') {
   const lines = m[1].split('\n');
   let ctx = null; // 'anchors' | 'phases' | null — which top-level section we're inside
   let anchorsFilesBlock = false; // true while inside an `anchors.files:` block dash-list
+  // While set, we are inside a block-scalar (`|`/`>`) body: { indent } holds
+  // the indentation of the KEY that introduced it. Any line indented MORE
+  // than that is body text, not structure, and must be skipped outright —
+  // otherwise prose inside e.g. a phase's `delta: |` can be mistaken for a
+  // `status:` key or a `- name:` phase entry.
+  let blockScalar = null;
   for (const line of lines) {
     if (!line.trim()) continue;
     const trimmed = line.trim();
     const indent = line.length - line.trimStart().length;
     const isDash = trimmed.startsWith('-');
+
+    if (blockScalar) {
+      if (indent > blockScalar.indent) continue; // still inside the scalar body — skip
+      blockScalar = null; // body ended; fall through and process this line normally
+    }
 
     // A dash line belongs to the CURRENT section's list regardless of its
     // indent (YAML allows dashes at the same indent as their parent key).
@@ -65,6 +86,15 @@ export function parseItem(text, file = '') {
       const val = stripInlineComment(rawVal.trim());
       if (key === 'anchors' && val === '') { ctx = 'anchors'; continue; }
       if (key === 'phases' && val === '') { ctx = 'phases'; continue; }
+      if (isBlockScalarHeader(val)) {
+        blockScalar = { indent };
+        // Shallow scalar fields don't capture multi-line bodies; blank them.
+        if (key === 'id') item.id = '';
+        else if (key === 'title') item.title = '';
+        else if (key === 'status') item.status = '';
+        else if (key === 'intent') item.intent = '';
+        continue;
+      }
       if (key === 'id') item.id = stripQuotes(val);
       else if (key === 'title') item.title = stripQuotes(val);
       else if (key === 'status') item.status = stripQuotes(val);
@@ -85,6 +115,12 @@ export function parseItem(text, file = '') {
       if (!kv) continue;
       const [, key, rawVal] = kv;
       const val = stripInlineComment(rawVal.trim());
+      if (isBlockScalarHeader(val)) {
+        blockScalar = { indent };
+        if (key === 'sha') item.anchors.sha = '';
+        else if (key === 'plan') item.anchors.plan = '';
+        continue;
+      }
       if (key === 'sha') item.anchors.sha = stripQuotes(val);
       else if (key === 'plan') item.anchors.plan = stripQuotes(val);
       else if (key === 'files') {
@@ -99,8 +135,14 @@ export function parseItem(text, file = '') {
       const dash = trimmed.match(/^-\s*name:\s*(.*)$/);
       if (dash) { item.phases.push({ name: stripQuotes(stripInlineComment(dash[1])), status: '' }); continue; }
       const kv = trimmed.match(/^([A-Za-z_]+):\s*(.*)$/);
-      if (kv && item.phases.length) {
-        if (kv[1] === 'status') item.phases[item.phases.length - 1].status = stripQuotes(stripInlineComment(kv[2]));
+      if (kv) {
+        const val = stripInlineComment(kv[2].trim());
+        if (isBlockScalarHeader(val)) {
+          blockScalar = { indent };
+          if (kv[1] === 'status' && item.phases.length) item.phases[item.phases.length - 1].status = '';
+          continue;
+        }
+        if (kv[1] === 'status' && item.phases.length) item.phases[item.phases.length - 1].status = stripQuotes(val);
         // per-phase 'delta' etc. ignored by scripts
       }
       continue;

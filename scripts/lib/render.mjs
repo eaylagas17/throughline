@@ -12,7 +12,7 @@ export function renderSurface(items) {
   for (const it of items) {
     const prog = phaseProgress(it.phases);
     const detail = prog ? prog : it.status;
-    const stale = it.stale ? '  ⚠ stale' : '';
+    const stale = it.stale ? `  ⚠ stale — ${it.staleReason || 'anchored files changed'}` : '';
     lines.push(`  [${it.id}] ${it.title} — ${detail}${stale}`);
   }
   lines.push('Pick one to work on: /throughline ship <id>. (Nothing runs until you pick.)');
