@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildSurface, surfaceContext } from '../hooks/throughline-surface.mjs';
+import { buildSurface, surfaceContext, buildHookOutput } from '../hooks/throughline-surface.mjs';
 
 function storeWith(files) {
   const dir = mkdtempSync(join(tmpdir(), 'surf-'));
@@ -45,4 +45,36 @@ test('surfaceContext: wraps the summary with a directive to show the user', () =
   assert.match(ctx, /showing them this backlog/i);   // tells Claude to relay it visibly
   assert.match(ctx, /do not begin any work until they choose/i); // preserves "nothing runs until you pick"
   assert.match(ctx, /📌 throughline — 1 open item/); // the summary is still included verbatim
+});
+
+const SUMMARY = '📌 throughline — 1 open item';
+
+test('buildHookOutput: empty summary → null in every mode (never nag)', () => {
+  for (const mode of ['auto', 'passive', 'off']) {
+    assert.equal(buildHookOutput({ summary: '', mode }), null);
+    assert.equal(buildHookOutput({ summary: null, mode }), null);
+  }
+});
+
+test('buildHookOutput: off → null even with a backlog', () => {
+  assert.equal(buildHookOutput({ summary: SUMMARY, mode: 'off' }), null);
+});
+
+test('buildHookOutput: passive → additionalContext only, nothing shown directly', () => {
+  const out = buildHookOutput({ summary: SUMMARY, mode: 'passive' });
+  assert.equal(out.hookSpecificOutput.hookEventName, 'SessionStart');
+  assert.match(out.hookSpecificOutput.additionalContext, /📌 throughline/);
+  assert.equal(out.systemMessage, undefined);                         // no visible line
+});
+
+test('buildHookOutput: auto → shows the backlog to the user (systemMessage) + context', () => {
+  const out = buildHookOutput({ summary: SUMMARY, mode: 'auto' });
+  assert.match(out.systemMessage, /📌 throughline/);                  // user sees it directly
+  assert.match(out.hookSpecificOutput.additionalContext, /📌 throughline/);
+  assert.equal(out.hookSpecificOutput.initialUserMessage, undefined); // no synthetic turn
+});
+
+test('buildHookOutput: default mode is auto (surfaces visibly)', () => {
+  const out = buildHookOutput({ summary: SUMMARY });
+  assert.ok(out.systemMessage);
 });

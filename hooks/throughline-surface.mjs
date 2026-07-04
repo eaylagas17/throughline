@@ -17,26 +17,59 @@ export function buildSurface({ storeDir, cwd, headSha = realHeadSha, changedFile
   return renderSurface(items);
 }
 
-// SessionStart additionalContext goes to Claude, not the user's view — so we must
-// instruct Claude to relay it, or the "greets you" surfacing stays invisible.
-export function surfaceContext(summary) {
+// The context handed to Claude. `shown: true` means the backlog was already
+// surfaced to the user (via systemMessage), so Claude just waits for a pick;
+// otherwise Claude must relay it, since additionalContext alone is invisible.
+export function surfaceContext(summary, { shown = false } = {}) {
   if (!summary) return null;
+  if (shown) {
+    return `throughline surfaced this project's pending backlog to the user at session start `
+      + `(shown to them directly). Wait for them to pick an item with /throughline ship <id> — `
+      + `do not begin any work until they choose one.\n\n${summary}`;
+  }
   return `The throughline plugin loaded this project's pending backlog at session start. `
     + `Open your first reply to the user by showing them this backlog verbatim, then wait `
     + `for them to pick an item — do not begin any work until they choose one.\n\n${summary}`;
 }
 
-function emit(summary) {
-  const context = surfaceContext(summary);
-  if (!context) return; // silent no-op: never nag
-  process.stdout.write(JSON.stringify({
-    hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: context },
-  }) + '\n');
+// Assemble the SessionStart hook payload for a given surface mode. Returns null
+// (emit nothing) when there is no backlog, or when the user turned surfacing off.
+//
+//   auto    — top-level `systemMessage` renders the backlog straight to the user
+//             (works on startup AND /clear, no synthetic turn); additionalContext
+//             tells Claude it was already shown, so it just waits for a pick.
+//   passive — additionalContext only: nothing shown directly; Claude relays it on
+//             the user's first message.
+//   off      — nothing.
+export function buildHookOutput({ summary, mode = 'auto' }) {
+  if (!summary || mode === 'off') return null; // silent no-op: never nag
+  if (mode === 'passive') {
+    return {
+      hookSpecificOutput: {
+        hookEventName: 'SessionStart',
+        additionalContext: surfaceContext(summary, { shown: false }),
+      },
+    };
+  }
+  return {
+    systemMessage: summary, // visible to the user at session start, no relay needed
+    hookSpecificOutput: {
+      hookEventName: 'SessionStart',
+      additionalContext: surfaceContext(summary, { shown: true }),
+    },
+  };
+}
+
+function emit(summary, mode) {
+  const output = buildHookOutput({ summary, mode });
+  if (!output) return;
+  process.stdout.write(JSON.stringify(output) + '\n');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const cwd = process.cwd();
   const { findStore } = await import('../scripts/lib/store.mjs');
+  const { readSurfaceMode } = await import('../scripts/lib/config.mjs');
   const storeDir = findStore(cwd, gitRoot(cwd));
-  emit(buildSurface({ storeDir, cwd }));
+  emit(buildSurface({ storeDir, cwd }), readSurfaceMode(storeDir));
 }
