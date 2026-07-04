@@ -6,8 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "command -v node >/dev/null 2>&1 && node \"${CLAUDE_PLUGIN_ROOT}/hooks/throughline-surface.mjs\" || true",
-            "commandWindows": "if (Get-Command node -ErrorAction SilentlyContinue) { node \"$env:CLAUDE_PLUGIN_ROOT\\hooks\\throughline-surface.mjs\" }",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/throughline-surface.mjs"],
             "timeout": 5,
             "statusMessage": "Surfacing throughline..."
           }

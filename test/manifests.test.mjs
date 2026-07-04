@@ -20,7 +20,7 @@ test('hooks matcher covers startup|resume|clear|compact', () => {
   const h = read('hooks/throughline-hooks.json');
   const start = h.hooks.SessionStart[0];
   assert.equal(start.matcher, 'startup|resume|clear|compact');
-  const cmd = start.hooks[0].command;
-  assert.match(cmd, /throughline-surface\.mjs/);
-  assert.match(cmd, /command -v node/); // silent no-op guard when node absent
+  assert.equal(start.hooks[0].command, 'node');
+  assert.match(start.hooks[0].args.join(' '), /throughline-surface\.mjs/);
+  assert.match(start.hooks[0].args.join(' '), /\$\{CLAUDE_PLUGIN_ROOT\}/);
 });
