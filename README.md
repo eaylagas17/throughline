@@ -83,6 +83,23 @@ phases:
 Ship reads the real diff and the plan, re-validates its understanding, and asks only the open
 question. Nothing to re-explain. More worked before/afters live in [`examples/`](./examples).
 
+## Does it hold up?
+
+A reproducible, zero-dependency benchmark ([`benchmarks/`](./benchmarks)) runs the
+phase-handoff scenario above through fresh agents twice: once handed the prose paste-prompt,
+once handed the throughline item. Same code, same task, scored on a fixed plan-adherence
+rubric, N=5 per arm:
+
+- **Prose paste-prompt:** deleted the still-needed server auth path (the planted drift) in
+  **5 of 5** runs, which would have broken the mobile app.
+- **throughline item:** kept it in **5 of 5**, and every run's re-validate step named the
+  temptation and refused it, citing the plan.
+
+That is one run of a single scenario, with the method and limitations stated in full: it is
+a subagent proxy rather than full sessions, N is small, and the digits will move when you
+re-run it (the direction should not). The number is honest and re-runnable, not a marketing
+figure. Method, rubric, and caveats live in [`benchmarks/README.md`](./benchmarks).
+
 ## Honest lineage
 
 This space is crowded, and throughline is **not the first backlog tool**. It doesn't claim to
