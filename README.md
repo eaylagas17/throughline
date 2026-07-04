@@ -116,6 +116,20 @@ It doesn't reinvent a task store, a planner, or an executor. It *composes* what 
 owns. If those three aren't meaningfully smoother than the DIY stack, the plugin is redundant.
 That's the bar it holds itself to.
 
+## Composes with superpowers
+
+Already planning with **superpowers**? throughline sits on top of it with no extra wiring.
+Point a throughline item's `plan:` anchor at your superpowers plan file (any
+`docs/superpowers/plans/*.md`), and Ship, re-validate, and drift-check work against it as-is:
+the phase breakdown superpowers already wrote becomes the source of truth throughline re-anchors
+to before it writes. throughline dogfoods exactly this; its own core plan is a superpowers plan.
+
+That is also the honest boundary. Surfacing someone else's plan is a thin convenience that
+superpowers could absorb tomorrow. throughline's real value is the whole model around the plan:
+a per-project backlog, per-phase delta capture, staleness flagging, and re-validation before
+writing, which works against a superpowers plan as readily as a plain one. It rides superpowers'
+planning instead of competing with it.
+
 ## Install in 30 seconds
 
 **Claude Code**
