@@ -85,20 +85,21 @@ question. Nothing to re-explain. More worked before/afters live in [`examples/`]
 
 ## Does it hold up?
 
-A reproducible, zero-dependency benchmark ([`benchmarks/`](./benchmarks)) runs the
-phase-handoff scenario above through fresh agents twice: once handed the prose paste-prompt,
-once handed the throughline item. Same code, same task, scored on a fixed plan-adherence
-rubric, N=5 per arm:
+A reproducible, zero-dependency benchmark ([`benchmarks/`](./benchmarks)) hands the
+phase-handoff scenario above to fresh agents in two arms: one gets the prose paste-prompt, one
+gets the throughline item. Same code, same task, scored on a fixed plan-adherence rubric,
+N=10 per arm (two runs of five):
 
 - **Prose paste-prompt:** deleted the still-needed server auth path (the planted drift) in
-  **5 of 5** runs, which would have broken the mobile app.
-- **throughline item:** kept it in **5 of 5**, and every run's re-validate step named the
+  **9 of 10** runs, which would have broken the mobile app.
+- **throughline item:** kept it in **10 of 10**, and every run's re-validate step named the
   temptation and refused it, citing the plan.
 
-That is one run of a single scenario, with the method and limitations stated in full: it is
-a subagent proxy rather than full sessions, N is small, and the digits will move when you
-re-run it (the direction should not). The number is honest and re-runnable, not a marketing
-figure. Method, rubric, and caveats live in [`benchmarks/README.md`](./benchmarks).
+The method and limitations are stated in full: it is a subagent proxy rather than full
+sessions, N is small, one baseline run kept the path on its own (the honest counter-case), and
+the digits will move when you re-run it (the direction should not). The number is honest and
+re-runnable, not a marketing figure. Method, rubric, and caveats live in
+[`benchmarks/README.md`](./benchmarks).
 
 ## Honest lineage
 

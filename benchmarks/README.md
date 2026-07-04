@@ -5,20 +5,25 @@ a fixed scenario, honestly and reproducibly, with zero dependencies.
 
 ## The result
 
-One run, N=5 fresh agents per arm, same code fixture and same task ("implement Phase 2,
-best judgment"). Only the handoff differs: a prose paste-prompt vs. a throughline item that
-points at the plan and triggers a re-validate step.
+Two runs, N=5 fresh agents per arm each (N=10 per arm pooled), same code fixture and same
+task ("implement Phase 2, best judgment"). Only the handoff differs: a prose paste-prompt vs.
+a throughline item that points at the plan and triggers a re-validate step.
 
 | Arm | Mean plan-adherence | Removed the still-needed server Bearer path (the planted drift) |
 |---|---|---|
-| Prose paste-prompt | 2/3 (0.67) | **5 of 5 runs** |
-| throughline item | 3/3 (1.00) | **0 of 5 runs** |
+| Prose paste-prompt | 0.70 | **9 of 10 runs** |
+| throughline item | 1.00 | **0 of 10 runs** |
 
-**Headline:** the prose handoff deleted the server's `Bearer` path in every run, which
+**Headline:** the prose handoff deleted the server's `Bearer` path in 9 of 10 runs, which
 would break the mobile app that still authenticates with it. The throughline arm kept it in
-every run, and each run's re-validate step named the exact temptation ("it looks safe to
-delete the leftover Bearer code") and refused it, citing the plan. That is acceptance
-scenario #2's "re-validate catches an intentionally planted drift," observed 5 times out of 5.
+all 10, and every run's re-validate step named the exact temptation ("it looks safe to delete
+the leftover Bearer code") and refused it, citing the plan. That is acceptance scenario #2's
+"re-validate catches an intentionally planted drift," observed 10 times out of 10.
+
+The one baseline run that did not drift is worth stating plainly: it reasoned about rollout
+risk on its own and kept the path, with no plan to point to. So the baseline is not rigged to
+fail, a prose handoff can get it right; here it just usually did not (1 of 10). That single
+exception is the honest edge of this result, not a footnote to bury.
 
 Full per-run log: [`results.md`](./results.md). Reproduce it yourself: [`RUNBOOK.md`](./RUNBOOK.md).
 
@@ -33,8 +38,8 @@ Full per-run log: [`results.md`](./results.md). Reproduce it yourself: [`RUNBOOK
   plan before writing). Identical fixture, identical task otherwise.
 - **Rubric:** three plan-mandated Phase 2 behaviors, each honored or not; see [`rubric.md`](./rubric.md).
   Scored from each run's stated edits. The planted drift is deleting the server Bearer path.
-- **Sampling:** 5 fresh, independent agents per arm. Variation comes only from model sampling
-  (same prompt each time).
+- **Sampling:** 5 fresh, independent agents per arm per run, two runs (10 per arm pooled).
+  Variation comes only from model sampling (same prompt each time).
 
 ## Limitations (read these before quoting the number)
 
@@ -42,9 +47,9 @@ Full per-run log: [`results.md`](./results.md). Reproduce it yourself: [`RUNBOOK
   not full Claude Code sessions with the SessionStart hook installed against a real repo.
   They isolate the *handoff* variable; they do not exercise the surfacing hook or a live
   git-anchored diff.
-- **Small N, one scenario.** N=5 per arm, a single migration with a single, sharp planted
-  drift. Do not read "100% vs 0%" as a universal rate. Real handoffs have fuzzier and
-  multiple drift opportunities; expect a smaller, messier separation in the wild.
+- **Small N, one scenario.** N=10 per arm (two runs of 5), a single migration with a single,
+  sharp planted drift. Do not read "90% vs 0%" as a universal rate. Real handoffs have fuzzier
+  and multiple drift opportunities; expect a smaller, messier separation in the wild.
 - **The baseline is one plausible prose handoff, not the worst or the best.** Its "delete the
   old Authorization header code" phrasing is a realistic thing a saturated session writes,
   and it is what induces the drift. A more careful hand-written handoff (one that separates
