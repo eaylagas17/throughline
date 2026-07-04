@@ -24,23 +24,23 @@ export function surfaceContext(summary, { shown = false } = {}) {
   if (!summary) return null;
   if (shown) {
     return `throughline surfaced this project's pending backlog to the user at session start `
-      + `(shown to them directly). Wait for them to pick an item with /throughline ship <id> — `
+      + `(shown to them directly). Wait for them to pick an item with /throughline ship <id>; `
       + `do not begin any work until they choose one.\n\n${summary}`;
   }
   return `The throughline plugin loaded this project's pending backlog at session start. `
     + `Open your first reply to the user by showing them this backlog verbatim, then wait `
-    + `for them to pick an item — do not begin any work until they choose one.\n\n${summary}`;
+    + `for them to pick an item; do not begin any work until they choose one.\n\n${summary}`;
 }
 
 // Assemble the SessionStart hook payload for a given surface mode. Returns null
 // (emit nothing) when there is no backlog, or when the user turned surfacing off.
 //
-//   auto    — top-level `systemMessage` renders the backlog straight to the user
-//             (works on startup AND /clear, no synthetic turn); additionalContext
-//             tells Claude it was already shown, so it just waits for a pick.
-//   passive — additionalContext only: nothing shown directly; Claude relays it on
-//             the user's first message.
-//   off      — nothing.
+//   auto:    top-level `systemMessage` renders the backlog straight to the user
+//            (works on startup AND /clear, no synthetic turn); additionalContext
+//            tells Claude it was already shown, so it just waits for a pick.
+//   passive: additionalContext only, nothing shown directly; Claude relays it on
+//            the user's first message.
+//   off:     nothing.
 export function buildHookOutput({ summary, mode = 'auto' }) {
   if (!summary || mode === 'off') return null; // silent no-op: never nag
   if (mode === 'passive') {

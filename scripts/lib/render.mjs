@@ -8,12 +8,12 @@ function phaseProgress(phases) {
 
 export function renderSurface(items) {
   if (!items || items.length === 0) return '';
-  const lines = [`📌 throughline — ${items.length} open item${items.length > 1 ? 's' : ''} in this project:`];
+  const lines = [`📌 throughline · ${items.length} open item${items.length > 1 ? 's' : ''} in this project:`];
   for (const it of items) {
     const prog = phaseProgress(it.phases);
     const detail = prog ? prog : it.status;
-    const stale = it.stale ? `  ⚠ stale — ${it.staleReason || 'anchored files changed'}` : '';
-    lines.push(`  [${it.id}] ${it.title} — ${detail}${stale}`);
+    const stale = it.stale ? `  ⚠ stale · ${it.staleReason || 'anchored files changed'}` : '';
+    lines.push(`  [${it.id}] ${it.title} · ${detail}${stale}`);
   }
   lines.push('Pick one to work on: /throughline ship <id>. (Nothing runs until you pick.)');
   return lines.join('\n');

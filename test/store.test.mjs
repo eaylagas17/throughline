@@ -221,7 +221,7 @@ id: 0020
 title: Phase lines with trailing comments
 status: parked
 phases:
-  - name: Phase 1 — tokens  # first phase
+  - name: Phase 1 (tokens)  # first phase
     status: done   # complete
   - name: Phase 2  # second phase
     status: pending   # not started
@@ -229,7 +229,7 @@ phases:
 `;
   const it = parseItem(src);
   assert.deepEqual(it.phases, [
-    { name: 'Phase 1 — tokens', status: 'done' },
+    { name: 'Phase 1 (tokens)', status: 'done' },
     { name: 'Phase 2', status: 'pending' },
   ]);
 });

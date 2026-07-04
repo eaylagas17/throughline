@@ -18,7 +18,7 @@ status: parked
 intent: ""
 # decisions: settled choices/constraints the next session must respect
 decisions: []
-# open_questions: unresolved — Ship will ask ONLY these
+# open_questions: unresolved; Ship will ask ONLY these
 open_questions: []
 # acceptance: done when …
 acceptance: ""

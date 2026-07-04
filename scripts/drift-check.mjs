@@ -10,6 +10,6 @@ let any = false;
 for (const it of items) {
   if (!head) break;
   const { stale, reason } = computeStaleness(it, { headSha: head, changedFiles: changedFilesSince(cwd, it.anchors.sha) });
-  if (stale) { any = true; process.stdout.write(`[${it.id}] ${it.title} — ${reason}\n`); }
+  if (stale) { any = true; process.stdout.write(`[${it.id}] ${it.title} · ${reason}\n`); }
 }
 if (!any) process.stdout.write('No stale items.\n');

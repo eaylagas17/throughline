@@ -7,9 +7,9 @@ const ITEM_RE = /^\d{4}\.md$/;
 // start). The caller's `key:\s*` match already swallows the run of
 // whitespace right after the colon, so a header line like `phases:   # x`
 // hands us a value that is JUST the comment (no leading whitespace of its
-// own) — that's the "line start" case, and the whole value is the comment.
+// own); that's the "line start" case, and the whole value is the comment.
 // A line like `sha: abc1234   # x` hands us "abc1234   # x", where the
-// comment is preceded by (interior) whitespace — the "preceded by
+// comment is preceded by (interior) whitespace, the "preceded by
 // whitespace" case. Quoted values are left untouched: a `#` inside quotes
 // is data, not a comment, and stripQuotes() below handles unwrapping quotes.
 function stripInlineComment(s) {
@@ -37,7 +37,7 @@ function parseInlineList(s) {
 // A YAML block scalar header: `|` or `>`, optionally followed by a chomping
 // indicator (`-`/`+`) and/or an explicit indent indicator (1-9), in either
 // order (`|-`, `|2`, `|-2`, `|2-`, ...). Anything after inline-comment
-// stripping that matches this is NOT a plain scalar value — it introduces a
+// stripping that matches this is NOT a plain scalar value; it introduces a
 // multi-line body on the following, more-indented lines.
 function isBlockScalarHeader(s) {
   return /^[|>](?:[+-]?[1-9]?|[1-9]?[+-]?)$/.test(s.trim());
@@ -54,11 +54,11 @@ export function parseItem(text, file = '') {
   const m = text.match(/^---\n([\s\S]*?)\n---/);
   if (!m) return item;
   const lines = m[1].split('\n');
-  let ctx = null; // 'anchors' | 'phases' | null — which top-level section we're inside
+  let ctx = null; // 'anchors' | 'phases' | null: which top-level section we're inside
   let anchorsFilesBlock = false; // true while inside an `anchors.files:` block dash-list
   // While set, we are inside a block-scalar (`|`/`>`) body: { indent } holds
   // the indentation of the KEY that introduced it. Any line indented MORE
-  // than that is body text, not structure, and must be skipped outright —
+  // than that is body text, not structure, and must be skipped outright,
   // otherwise prose inside e.g. a phase's `delta: |` can be mistaken for a
   // `status:` key or a `- name:` phase entry.
   let blockScalar = null;
@@ -69,7 +69,7 @@ export function parseItem(text, file = '') {
     const isDash = trimmed.startsWith('-');
 
     if (blockScalar) {
-      if (indent > blockScalar.indent) continue; // still inside the scalar body — skip
+      if (indent > blockScalar.indent) continue; // still inside the scalar body, skip
       blockScalar = null; // body ended; fall through and process this line normally
     }
 

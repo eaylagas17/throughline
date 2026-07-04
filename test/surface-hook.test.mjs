@@ -41,13 +41,13 @@ test('surfaceContext: empty summary → null (silent no-op)', () => {
 });
 
 test('surfaceContext: wraps the summary with a directive to show the user', () => {
-  const ctx = surfaceContext('📌 throughline — 1 open item');
+  const ctx = surfaceContext('📌 throughline · 1 open item');
   assert.match(ctx, /showing them this backlog/i);   // tells Claude to relay it visibly
   assert.match(ctx, /do not begin any work until they choose/i); // preserves "nothing runs until you pick"
-  assert.match(ctx, /📌 throughline — 1 open item/); // the summary is still included verbatim
+  assert.match(ctx, /📌 throughline · 1 open item/); // the summary is still included verbatim
 });
 
-const SUMMARY = '📌 throughline — 1 open item';
+const SUMMARY = '📌 throughline · 1 open item';
 
 test('buildHookOutput: empty summary → null in every mode (never nag)', () => {
   for (const mode of ['auto', 'passive', 'off']) {

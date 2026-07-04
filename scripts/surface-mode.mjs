@@ -15,7 +15,7 @@ export function main(argv, deps = {}) {
     return { mode: readSurfaceMode(findStore(cwd, gitRoot(cwd))), changed: false };
   }
   if (!SURFACE_MODES.includes(arg)) {
-    throw new Error(`unknown mode "${arg}" — use one of: ${SURFACE_MODES.join(', ')}`);
+    throw new Error(`unknown mode "${arg}" (expected one of: ${SURFACE_MODES.join(', ')})`);
   }
   const storeDir = join(gitRoot(cwd) || cwd, '.throughline');
   writeSurfaceMode(storeDir, arg);
@@ -31,5 +31,5 @@ const DESC = {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { mode, changed } = main(process.argv.slice(2));
   const verb = changed ? 'throughline surfacing set to' : 'throughline surfacing is';
-  process.stdout.write(`${verb}: ${mode} — ${DESC[mode]}\n`);
+  process.stdout.write(`${verb} ${mode}: ${DESC[mode]}\n`);
 }
