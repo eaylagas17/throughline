@@ -8,8 +8,8 @@ license: MIT
 
 Capture pending work so a **cold future session** can execute it without you
 re-explaining. Two flavors: **park** (something for later) and **checkpoint**
-(a handoff at a phase boundary). Read `references/item-schema.md` before writing
-any item file.
+(a handoff at a phase boundary). Read `${CLAUDE_PLUGIN_ROOT}/references/item-schema.md`
+before writing any item file.
 
 **Core principle — point, don't summarize.** Record only what a fresh session
 *cannot* re-read from the code or the plan file: the *why*, the decisions, the
