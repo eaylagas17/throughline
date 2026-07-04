@@ -21,6 +21,9 @@ One-liner: *"Keep the throughline across every session."* Hero: drift-proof phas
 - **Build history & decisions:** `.superpowers/sdd/progress.md` (git-ignored local ledger).
 
 ## Status
-Plan A (the core plugin) is **complete and merged to `main`** (47/47 tests). **Plan B**
-(adoption layer: README, handoff-fidelity benchmark, examples, LICENSE, then publish to
-GitHub) is next; it's captured in `.throughline/0001.md`. Start there.
+Plan A (the core plugin) is **complete and merged to `main`** (67 tests via `npm test`). **Plan B**
+(the adoption layer) is nearly done: the README, `examples/`, `LICENSE`, and the handoff-fidelity
+benchmark have all shipped (item 0001 Phases 1 to 3). Only **Phase 4, publish to GitHub**, remains,
+and it is gated on explicit user go-ahead. A second item, **0002 (composability with
+superpowers/ponytail)**, is fully planned and parked (demand-gated). Both live in `.throughline/`;
+start there.

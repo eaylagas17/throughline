@@ -2,6 +2,7 @@
 
 **Keep the throughline across every session.**
 
+[![CI](https://github.com/eaylagas17/throughline/actions/workflows/test.yml/badge.svg)](https://github.com/eaylagas17/throughline/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Node ≥ 20](https://img.shields.io/badge/node-%E2%89%A5%2020-43853d.svg)](https://nodejs.org)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](./package.json)
@@ -144,6 +145,9 @@ planning instead of competing with it.
 ```
 codex plugin marketplace add eaylagas17/throughline
 ```
+
+Then open the Codex plugin directory (`codex /plugins`), pick your `throughline` marketplace, and
+install it there (Codex installs plugins from the directory, not with a separate shell command).
 
 **Any other agent** (Cursor, Windsurf, Copilot, …): instruction tier, no hook. Copy
 [`AGENTS.md`](./AGENTS.md) into your project's agent rules. You get Capture and Surface as
